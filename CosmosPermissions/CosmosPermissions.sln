@@ -12,7 +12,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionApp", "Permission
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Permissions.Model", "Permissions.Model\Permissions.Model.csproj", "{92380BF4-04A7-437D-A6B6-C2AB9A6019F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionApp.Function", "PermissionApp.Function\PermissionApp.Function.csproj", "{E72EFE21-63CD-42F0-A684-AC842956EA6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionApp.Function", "PermissionApp.Function\PermissionApp.Function.csproj", "{E72EFE21-63CD-42F0-A684-AC842956EA6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

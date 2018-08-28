@@ -61,8 +61,6 @@ namespace PermissionApp.Function
                     // The permission was not found - either the user (and permission) doesn't exist or permission doesn't exist
                     await CreateUserIfNotExistAsync(userId, client, databaseId);
                     
-                    // TODO: eventually instead of permissions per collection - make it permissions per doc / bit flipped
-
                     var newPermission = new Permission
                     {
                         PermissionMode = PermissionMode.Read,

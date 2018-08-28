@@ -152,7 +152,7 @@
       <Version>1.1.4-preview0002</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
+      <Version>10.0.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Azure.DocumentDB.Core">
       <Version>1.9.1</Version>
