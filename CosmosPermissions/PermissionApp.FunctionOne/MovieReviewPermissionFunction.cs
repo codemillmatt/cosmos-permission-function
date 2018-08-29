@@ -56,6 +56,33 @@ namespace PermissionApp.FunctionOne
             }
         }
 
+        [FunctionName("MovieReviewPermissionPartitioned")]
+        public static async Task<HttpResponseMessage> RunPartitioned(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequestMessage req,
+            [DocumentDB(databaseName: "moviereview-db", collectionName: "reviews", ConnectionStringSetting = "CosmosConnectionString")] DocumentClient client,
+            TraceWriter log)
+        {
+            try
+            {
+                // Figure out if we're logged in or not
+                var userId = GetUserId(log);
+
+                log.Info($"User ID: {userId}");
+
+                var token = await GetPartitionPermission(userId, client, dbName, collectionName);
+
+                //var serializedToken = SerializePermission(token);
+
+                return req.CreateResponse<string>(HttpStatusCode.OK, token.Token);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"***Something went wrong {ex.Message}");
+
+                return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
         static async Task<List<Permission>> GetReadPermission(string userId, DocumentClient client, string databaseId, string collectionId)
         {
             List<Permission> movieReviewPermissions = new List<Permission>();
@@ -113,6 +140,60 @@ namespace PermissionApp.FunctionOne
 
             return movieReviewPermissions;
         }
+
+        static async Task<Permission> GetPartitionPermission(string userId, DocumentClient client, string databaseId, string collectionId)
+        {
+            Permission partitionPermission = new Permission();
+            bool isLimitedPartition = true;
+            string permissionId = "";
+
+            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(databaseId, collectionId);
+            Uri userUri = UriFactory.CreateUserUri(databaseId, userId);
+
+            if (userId == publicUserId)
+            {
+                permissionId = $"{userId}-partition-limited-{collectionId}";
+                isLimitedPartition = true;
+            }
+            else
+            {
+                permissionId = $"{userId}-partition-all-{collectionId}";
+                isLimitedPartition = false;
+            }
+
+            try
+            {
+                // the permission ID's format: {userID}-{documentID}
+                Uri permissionUri = UriFactory.CreatePermissionUri(databaseId, userId, permissionId);
+
+                partitionPermission = await client.ReadPermissionAsync(permissionUri);
+            }
+            catch (DocumentClientException ex)
+            {
+                if (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // The permission was not found - either the user (and permission) doesn't exist or permission doesn't exist
+                    await CreateUserIfNotExistAsync(userId, client, databaseId);
+
+                    var newPermission = new Permission
+                    {
+                        PermissionMode = PermissionMode.Read,
+                        Id = permissionId,
+                        ResourceLink = collectionUri.ToString()
+                    };
+
+                    if (isLimitedPartition)
+                        newPermission.ResourcePartitionKey = new PartitionKey(false);
+
+                    partitionPermission = await client.CreatePermissionAsync(userUri, newPermission);
+                }
+                else { throw ex; }
+
+            }
+
+            return partitionPermission;
+        }
+
 
         static async Task CreateUserIfNotExistAsync(string userId, DocumentClient client, string databaseId)
         {
